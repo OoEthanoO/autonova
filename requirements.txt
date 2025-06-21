@@ -2,4 +2,4 @@ fastapi
 uvicorn[standard]
 litellm
 langgraph
-psycopg2
+psycopg2-binary
