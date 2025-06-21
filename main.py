@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Response
 from pydantic import BaseModel
 
 from agent import Agent
@@ -10,15 +10,12 @@ agent_instance = Agent()
 class TaskRequest(BaseModel):
     task: str
 
-class TaskResponse(BaseModel):
-    result: str
-
 @app.get("/")
 async def root():
     return {"message": "Autonova v0.1.0 Agent"}
 
-@app.post("/agent/execute", response_model=TaskResponse)
+@app.post("/agent/execute")
 async def execute_task(request: TaskRequest):
     task_description = request.task
     execution_result = agent_instance.execute(task_description)
-    return {"result": execution_result}
+    return Response(content=execution_result, media_type="application/json")
