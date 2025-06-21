@@ -12,7 +12,7 @@ class TaskRequest(BaseModel):
 
 @app.get("/")
 async def root():
-    return {"message": "Autonova v0.1.0 Agent"}
+    return {"message": "Autonova v0.2.0 Agent"}
 
 @app.post("/agent/execute")
 async def execute_task(request: TaskRequest):
