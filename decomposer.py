@@ -1,19 +1,10 @@
 from agent import Agent
 
 class Decomposer:
-    """
-    This class will be responsible for breaking down high-level tasks
-    into a series of smaller, executable sub-tasks.
-    The logic will be implemented in the next steps.
-    """
     def __init__(self, agent: Agent):
         self.agent = agent
 
     def decompose(self, task: str) -> list[str]:
-        """
-        Takes a task string, uses an LLM to break it into sub-tasks,
-        and returns a list of sub-task strings.
-        """
         system_prompt = """You are a task decomposition expert. Your role is to break down a complex, high-level user request into a sequence of simple, executable sub-tasks.
 
 Your output MUST be a numbered list, with each step on a new line. Do not add any introductory or concluding text.
