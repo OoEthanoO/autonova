@@ -3,3 +3,5 @@ uvicorn[standard]
 litellm
 langgraph
 psycopg2-binary
+langchain
+langsmith
