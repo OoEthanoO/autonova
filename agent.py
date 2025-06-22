@@ -27,7 +27,7 @@ class Agent:
         prompt = f"Please provide a concise, simulated web search result for the query: '{query}'. Imagine you are a search engine providing a top snippet."
         return self._invoke_llm([{"content": prompt, "role": "user"}])
 
-    def execute(self, task: str) -> str:
+    def execute(self, task: str) -> dict:
         log_data = {
             "task": task,
             "llm_decision_raw": None,
@@ -110,27 +110,27 @@ Your single-line response:"""
 
 
         
-        return json.dumps(log_data, indent=2)
+        return log_data
     
 if __name__ == "__main__":
     agent = Agent()
     
     print("--- Test Case 1: Current Time ---")
     time_task = "What time is it?"
-    result_json_str = agent.execute(time_task)
-    print(result_json_str)
+    result_dict = agent.execute(time_task)
+    print(json.dumps(result_dict, indent=2))
 
     print("\n--- Test Case 2: Web Search ---")
     search_task = "What are the latest developments in AI?"
-    result_json_str = agent.execute(search_task)
-    print(result_json_str)
+    result_dict = agent.execute(search_task)
+    print(json.dumps(result_dict, indent=2))
 
     print("\n--- Test Case 3: Direct Answer ---")
     direct_task = "What is the capital of France?"
-    result_json_str = agent.execute(direct_task)
-    print(result_json_str)
+    result_dict = agent.execute(direct_task)
+    print(json.dumps(result_dict, indent=2))
 
     print("\n--- Test Case 4: Fallback (potentially) ---")
     unknown_task = "Explain quantum entanglement simply."
-    result_json_str = agent.execute(unknown_task)
-    print(result_json_str)
+    result_dict = agent.execute(unknown_task)
+    print(json.dumps(result_dict, indent=2))

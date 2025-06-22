@@ -1,14 +1,11 @@
-from fastapi import FastAPI, Response
+from fastapi import FastAPI, Response, HTTPException
 from pydantic import BaseModel
 import json
 
-from agent import Agent
-from decomposer import Decomposer
+from database import get_db_connection
+from graph import app as graph_app, AgentState
 
 app = FastAPI()
-
-agent_instance = Agent()
-decomposer_instance = Decomposer(agent=agent_instance)
 
 class TaskRequest(BaseModel):
     task: str
@@ -20,14 +17,47 @@ async def root():
 @app.post("/agent/execute")
 async def execute_task(request: TaskRequest):
     task_description = request.task
+    graph_input = {"original_task": task_description}
 
-    print(f"Received task for decomposition: {task_description}")
-    sub_tasks = decomposer_instance.decompose(task_description)
-    print(f"Decomposed sub-tasks: {sub_tasks}")
+    final_state = None
+    task_id = None
+    conn = None
+
+    try:
+        print(f"Invoking graph for task: {task_description}")
+        final_state = graph_app.invoke(graph_input)
+        print("Graph execution complete.")
+
+        conn = get_db_connection()
+        if conn is None:
+            print("Warning: Could not connect to the database to log results.")
+        else:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    INSERT INTO tasks (original_task, sub_tasks, status)
+                    VALUES (%s, %s, %s) RETURNING id
+                    """,
+                    (
+                        final_state.get('original_task'),
+                        json.dumps(final_state.get('results', [])),
+                        'SUCCESS'
+                    )
+                )
+                task_id = cur.fetchone()[0]
+                conn.commit()
+                print(f"Task {task_id} and results logged to database.")
+
+    except Exception as e:
+        print(f"An error occurred during graph execution or database logging: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to execute task graph: {e}")
+    finally:
+        if conn:
+            conn.close()
 
     response_data = {
-        "original_task": task_description,
-        "decomposed_sub_tasks": sub_tasks
+        "task_id": task_id,
+        "final_state": final_state
     }
 
     return Response(content=json.dumps(response_data, indent=2), media_type="application/json")
