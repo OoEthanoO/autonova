@@ -41,7 +41,7 @@ def execute_step(state: AgentState) -> dict:
     print(f"Executing sub-task: {current_task}")
 
     try:
-        result = agent_instance.execute(current_task)
+        result = agent_instance.execute(current_task, state.results)
         print(f"Sub-task '{current_task}' executed successfully.")
 
         remaining_sub_tasks = sub_tasks[1:]

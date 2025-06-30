@@ -4,7 +4,7 @@ import json
 
 class Agent:
     def __init__(self):
-        self.llm_model = "ollama/gemma3:12b"
+        self.llm_model = "ollama/gemma3:12b-it-q4_K_M"
 
     def get_current_time(self) -> str:
         return datetime.datetime.now().isoformat()
@@ -27,7 +27,7 @@ class Agent:
         prompt = f"Please provide a concise, simulated web search result for the query: '{query}'. Imagine you are a search engine providing a top snippet."
         return self._invoke_llm([{"content": prompt, "role": "user"}])
 
-    def execute(self, task: str) -> dict:
+    def execute(self, task: str, history: list = None) -> dict:
         log_data = {
             "task": task,
             "llm_decision_raw": None,
@@ -37,7 +37,13 @@ class Agent:
             "final_response": None
         }
 
-        system_prompt = """You are an agent that must decide which tool to use to respond to a task.
+        context_str = ""
+        if history:
+            context_str = "You have access to the results of previous steps. Use this information to answer the current task if possible before searching the web again.\n\nPREVIOUS RESULTS:\n"
+            formatted_history = "\n---\n".join([json.dumps(item, indent=2) for item in history])
+            context_str += formatted_history + "\n\n--\n"
+
+        system_prompt = f"""{context_str}You are an agent that must decide which tool to use to respond to a task.
 Your response MUST be a single line in one of the following formats, and nothing else:
 1. For current time: ACTION: current_time
 2. For web searches: ACTION: search_web | QUERY: [your search query]

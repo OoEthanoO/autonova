@@ -1,0 +1,13 @@
+docker-compose up -d
+pip install -r requirements.txt
+python database.py
+uvicorn main:app --reload
+
+$body = @{
+    task = "What time is it and what are the latest AI developments?"
+} | ConvertTo-Json
+$response = Invoke-WebRequest -Uri http://127.0.0.1:8000/agent/execute `
+    -Method POST `
+    -ContentType "application/json" `
+    -Body $body
+$response.Content | ConvertFrom-Json | ConvertTo-Json -Depth 100
