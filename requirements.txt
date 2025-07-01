@@ -5,3 +5,4 @@ langgraph
 psycopg2-binary
 langchain
 langsmith
+duckduckgo-search

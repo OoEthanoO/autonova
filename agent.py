@@ -1,6 +1,7 @@
 import datetime
 import litellm
 import json
+from duckduckgo_search import DDGS
 
 class Agent:
     def __init__(self):
@@ -23,9 +24,34 @@ class Agent:
             print(f"LiteLLM Exception: {e}")
             return f"Error invoking LLM: {e}"
         
+    def synthesize_final_answer(self, original_task: str, history: list) -> str:
+        context_str = "You have access to the results of the steps executed to address the original user request. Your task is to synthesize these results into a single, coherent final answer for the user.\n\n"
+        context_str += f"ORIGINAL REQUEST: \"{original_task}\"\n\n"
+        context_str += "RESULTS OF EXECUTED STEPS:\n"
+        formatted_history = "\n---\n".join([json.dumps(item, indent=2) for item in history])
+        context_str += formatted_history + "\n\n--\n"
+
+        system_prompt = "You are a helpful assistant. Based on the original request and the collected results from a series of steps, provide a comprehensive and user-friendly final answer."
+        user_prompt = f"{context_str}Please provide the final, synthesized answer to the user."
+
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt}
+        ]
+
+        return self._invoke_llm(messages)
+        
     def search_web(self, query: str) -> str:
-        prompt = f"Please provide a concise, simulated web search result for the query: '{query}'. Imagine you are a search engine providing a top snippet."
-        return self._invoke_llm([{"content": prompt, "role": "user"}])
+        print(f"Performing web search for: '{query}'")
+        try:
+            with DDGS() as ddgs:
+                results = [r for r in ddgs.text(query, max_results=3)]
+                if not results:
+                    return "No results found."
+                return "\n\n".join([f"Title: {res['title']}\nURL: {res['href']}\nSnippet: {res['body']}" for res in results])
+        except Exception as e:
+            print(f"Error during web search: {e}")
+            return f"Error performing web search: {e}"
 
     def execute(self, task: str, history: list = None) -> dict:
         log_data = {

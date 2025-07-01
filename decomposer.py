@@ -5,7 +5,10 @@ class Decomposer:
         self.agent = agent
 
     def decompose(self, task: str) -> list[str]:
-        system_prompt = """You are a task decomposition expert. Your role is to break down a complex, high-level user request into a sequence of simple, executable sub-tasks.
+        system_prompt = """You are a task decomposition expert. Your role is to break down a complex, high-level user request into a sequence of simple, executable sub-tasks that can be handled by an agent with the following tools:
+- `current_time`: Gets the current time.
+- `search_web`: Searches the web for a given query.
+- `answer_directly`: Provides a direct answer to a simple question.
 
 Your output MUST be a numbered list, with each step on a new line. Do not add any introductory or concluding text.
 
@@ -16,7 +19,13 @@ Your Output:
 2. Analyze the search results to identify the top 3 most significant stories.
 3. For each of the top 3 stories, read the content and generate a concise summary.
 4. Compose an email draft containing the three summaries.
-5. Send the email to me."""
+5. Send the email to me.
+
+Example 2:
+User Request: "What time is it and who is the US president?"
+Your Output:
+1. Get the current time.
+2. Search the web for "current US president"."""
 
         user_prompt = f"User Request: \"{task}\"\nYour Output:"
 

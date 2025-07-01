@@ -12,6 +12,7 @@ class AgentState(BaseModel):
     original_task: str
     sub_tasks: List[str] = []
     results: List[Any] = []
+    final_response: str | None = None
     max_retries: int = 3
     retries: int = 0
     error: str | None = None
@@ -59,6 +60,16 @@ def execute_step(state: AgentState) -> dict:
             "retries": state.retries + 1,
         }
     
+def generate_final_response(state: AgentState) -> dict:
+    print("--- Node: Generate Final Response ---")
+    original_task = state.original_task
+    results = state.results
+
+    final_response = agent_instance.synthesize_final_answer(original_task, results)
+    print(f"Final synthesized response:\n{final_response}")
+
+    return {"final_response": final_response}
+    
 def handle_error(state: AgentState) -> dict:
     print("--- Node: Handle Error ---")
     if state.retries >= state.max_retries:
@@ -77,8 +88,8 @@ def should_continue(state: AgentState) -> str:
         return "handle_error"
 
     if not state.sub_tasks:
-        print("Decision: No more tasks, ending the workflow.")
-        return END
+        print("Decision: No more tasks, routing to generate_final_response.")
+        return "generate_final_response"
 
     print("Decision: Continue to execute_step.")
     return "execute_step"
@@ -88,11 +99,13 @@ workflow = StateGraph(AgentState)
 workflow.add_node("decompose_task", decompose_task)
 workflow.add_node("execute_step", execute_step)
 workflow.add_node("handle_error", handle_error)
+workflow.add_node("generate_final_response", generate_final_response)
 
 workflow.set_entry_point("decompose_task")
 
 workflow.add_edge("decompose_task", "execute_step")
 workflow.add_edge("handle_error", "execute_step")
+workflow.add_edge("generate_final_response", END)
 
 workflow.add_conditional_edges(
     "execute_step",
@@ -100,7 +113,7 @@ workflow.add_conditional_edges(
     {
         "execute_step": "execute_step",
         "handle_error": "handle_error",
-        END: END
+        "generate_final_response": "generate_final_response"
     }
 )
 
